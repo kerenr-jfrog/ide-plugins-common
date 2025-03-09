@@ -102,17 +102,16 @@ public class JfrogCliDriverTest {
         // We use hardcoded version because the setup method downloads the latest cli version which is greater than 2.73.0.
         Version jfrogCliVersion = new Version("2.73.0");
         String destinationFolder = tempDir.getAbsolutePath();
-        File destinationFolderFile = new File(destinationFolder);
         Path jfrogCliPath = Paths.get(destinationFolder).resolve(jfrogCliDriver.getJfrogExec());
 
         // Verify Jfrog cli executable file exist and get its version
         assertTrue(Files.exists(jfrogCliPath));
-        String currentCliVersion = jfrogCliDriver.runVersion(destinationFolderFile);
+        String currentCliVersion = jfrogCliDriver.runVersion();
 
         jfrogCliDriver.downloadCliIfNeeded(destinationFolder, jfrogCliVersion);
 
         // Assert the new downloaded cli version is compatible with the required version
-        String newJfrogCliVersion = jfrogCliDriver.runVersion(destinationFolderFile);
+        String newJfrogCliVersion = jfrogCliDriver.runVersion();
 
         assertTrue(newJfrogCliVersion.contains(jfrogCliVersion.toString()));
         assertNotEquals(currentCliVersion, newJfrogCliVersion);

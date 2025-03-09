@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.client.Version;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
@@ -27,6 +26,9 @@ import static com.jfrog.ide.common.utils.Utils.createMapper;
 import static com.jfrog.ide.common.utils.Utils.getOSAndArc;
 
 /**
+ *  * This class provides methods to interact with the JFrog CLI.
+ *  * It includes methods to check if the CLI is installed, download it if needed,
+ *  * run JFrog CLI commands and configure server settings.
  * @author Tal Arian
  */
 public class JfrogCliDriver {
@@ -38,11 +40,26 @@ public class JfrogCliDriver {
     @Getter
     private String jfrogExec = "jf";
 
+    /**
+     * Constructor to initialize JfrogCliDriver with environment variables and log.
+     * The `path` parameter defaults to an empty string, indicating that the JFrog CLI executable is located in the current working directory.
+     *
+     * @param env Environment variables map.
+     * @param log Logger instance.
+     */
     @SuppressWarnings("unused")
     public JfrogCliDriver(Map<String, String> env, Log log) {
         this(env, "", log);
     }
 
+
+    /**
+     * Constructor to initialize JfrogCliDriver with environment variables, path, and log.
+     *
+     * @param env Environment variables map.
+     * @param path Path to the directory where the JFrog CLI executable is located.
+     * @param log Logger instance.
+     */
     public JfrogCliDriver(Map<String, String> env, String path, Log log) {
         if (SystemUtils.IS_OS_WINDOWS) {
             this.jfrogExec += ".exe";
@@ -53,7 +70,7 @@ public class JfrogCliDriver {
 
     @SuppressWarnings("unused")
     public boolean isJfrogCliInstalled() {
-        return runVersion(null) != null;
+        return runVersion() != null;
     }
 
     @SuppressWarnings("unused")
@@ -82,10 +99,10 @@ public class JfrogCliDriver {
         }
     }
 
-    public String runVersion(File workingDirectory) {
+    public String runVersion() {
         String versionOutput = null;
         try{
-            versionOutput = runCommand(workingDirectory, new String[]{"--version"}, Collections.emptyList()).getRes();
+            versionOutput = runCommand(null, new String[]{"--version"}, Collections.emptyList()).getRes();
         } catch (IOException | InterruptedException e) {
             log.error("Failed to get CLI version. Reason: " + e.getMessage());
         }
@@ -110,8 +127,8 @@ public class JfrogCliDriver {
     }
 
     public void downloadCliIfNeeded(String destinationPath, Version jfrogCliVersion) throws IOException {
-        // verify installed cli version
-        Version cliVersion = extractVersionFromCliOutput(runVersion(null));
+        // verify installed cli version in destinationPath
+        Version cliVersion = extractVersionFromCliOutput(runVersion());
         log.debug("Local CLI version is: " + cliVersion);
         // cli is installed but not the correct version
         if (cliVersion != null && cliVersion.equals(jfrogCliVersion)) {
