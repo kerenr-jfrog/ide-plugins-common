@@ -1,6 +1,9 @@
 package com.jfrog.ide.common.configuration;
 
+import com.jfrog.ide.common.nodes.FileIssueNode;
 import com.jfrog.ide.common.nodes.FileTreeNode;
+import com.jfrog.ide.common.nodes.subentities.Severity;
+import com.jfrog.ide.common.nodes.subentities.SourceCodeScanType;
 import com.jfrog.ide.common.parse.SarifParser;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.NullLog;
@@ -200,14 +203,20 @@ public class JfrogCliDriverTest {
     public void testRunAudit_NpmProject() {
         String projectToCheck = "npm";
         try {
-            Path exampleProjectsFolder = Path.of("src/test/resources/example-projects/npm");
+            Path exampleProjectsFolder = Path.of("src/test/resources/example-projects");
             CommandResults response = jfrogCliDriver.runCliAudit(exampleProjectsFolder.toFile(),
                     singletonList(projectToCheck), testServerId, null, testEnv);
             assertEquals(response.getExitValue(),0);
             List<FileTreeNode> findings = parser.parse(response.getRes());
             assertNotNull(findings);
             assertFalse(findings.isEmpty(), "Expected findings in SARIF output for npm project");
-            // TODO: Add more checks on the findings
+            // Verify the findings
+            assertEquals(findings.size(), 1, "Expected exactly one file with findings");
+            FileTreeNode node = findings.get(0);
+            assertEquals(node.getChildren().size(), 1, "Expected exactly one vulnerabilities");
+            FileIssueNode issue = (FileIssueNode) node.getChildren().get(0);
+            assertEquals(issue.getSeverity(), Severity.High, "Expected severity to be HIGH");
+            assertEquals(issue.getReporterType(), SourceCodeScanType.SCA, "Expected reporter type to be SCA");
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }
@@ -224,7 +233,16 @@ public class JfrogCliDriverTest {
             List<FileTreeNode> findings = parser.parse(response.getRes());
             assertNotNull(findings);
             assertFalse(findings.isEmpty(), "Expected findings in SARIF output for multi-maven project");
-            // TODO: Add more checks on the findings
+            // Verifiy the findings
+            assertEquals(findings.size(), 1, "Expected exactly one file with findings");
+            FileTreeNode node = findings.get(0);
+            assertEquals(node.getChildren().size(), 3, "Expected exactly three vulnerabilities");
+            FileIssueNode issue = (FileIssueNode) node.getChildren().get(0);
+            assertEquals(issue.getSeverity(), Severity.High, "Expected severity to be HIGH");
+            assertEquals(issue.getReporterType(), SourceCodeScanType.SCA, "Expected reporter type to be SCA");
+            issue = (FileIssueNode) node.getChildren().get(2);
+            assertEquals(issue.getSeverity(), Severity.Medium, "Expected severity to be MEDIUM");
+            assertEquals(issue.getReporterType(), SourceCodeScanType.SCA, "Expected reporter type to be SCA");
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }
